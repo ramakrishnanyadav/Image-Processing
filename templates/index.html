@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Processing App - Dark Mode</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #b8f0ae;
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        padding: 20px 0;
+    }
+
+    .container {
+        background-color: #2a2a3e;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        text-align: center;
+        max-width: 800px;
+        width: 90%;
+    }
+
+    /* Title with background */
+    h1 {
+        color: #ffffff;
+        background-color: #ffae42;
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    /* Upload button */
+    .custom-file-upload {
+        display: inline-block;
+        padding: 12px 25px;
+        border-radius: 12px;
+        background-color: #ffae42;
+        color: #1e1e2f;
+        font-weight: bold;
+        margin-bottom: 15px;
+        transition: 0.3s;
+        cursor: none; /* hide cursor */
+    }
+
+    .custom-file-upload:hover {
+        background-color: #ff921e;
+        cursor: none;
+    }
+
+    select {
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 25px;
+        font-size: 16px;
+        background-color: #3a3a55;
+        color: #ffffff;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    select:hover {
+        background-color: #4a4a6f;
+    }
+
+    button {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 12px;
+        background-color: #ffae42;
+        color: #1e1e2f;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        margin: 5px;
+    }
+
+    button:hover {
+        background-color: #ff921e;
+    }
+
+    .flash {
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .flash.success {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .flash.error {
+        background-color: #f44336;
+        color: white;
+    }
+
+    /* Gallery */
+    .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .image-card {
+        text-align: center;
+    }
+
+    .gallery img {
+        width: 100%;
+        height: auto; /* ensures full image display */
+        object-fit: contain;
+        border-radius: 12px;
+        border: 2px solid #ffae42;
+        transition: transform 0.3s;
+    }
+
+    .gallery img:hover {
+        transform: scale(1.05);
+    }
+
+    .file-path {
+        font-size: 12px;
+        color: #ffd700; /* bright color for visibility */
+        margin-top: 5px;
+        word-break: break-all; /* long file names wrap */
+    }
+
+    @media (max-width: 480px) {
+        h1 { font-size: 22px; }
+        button, select, .custom-file-upload { width: 90%; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Image Processing App</h1>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Upload Form -->
+    <form action="{{ url_for('process_images') }}" method="POST" enctype="multipart/form-data">
+        <label class="custom-file-upload">
+            <input type="file" name="images" accept="image/*" multiple required>
+            Upload Images
+        </label>
+        <br>
+        <select name="operation" required>
+            <option value="">Select Operation</option>
+            <option value="translation">Translation</option>
+            <option value="rotation">Rotation</option>
+            <option value="scaling">Scaling</option>
+            <option value="brightness_enhance">Brightness Enhance</option>
+            <option value="brightness_suppress">Brightness Suppress</option>
+            <option value="contrast">Contrast</option>
+            <option value="hist_eq">Histogram Equalization</option>
+            <option value="negative">Negative</option>
+            <option value="gray_slice_no_bg">Gray Slice (No BG)</option>
+            <option value="gray_slice_bg">Gray Slice (BG)</option>
+            <option value="log">Log Transform</option>
+            <option value="power">Power Law</option>
+            <option value="freq">Frequency Response</option>
+            <option value="zoom">Zoom Pixel Replication</option>
+            <option value="box_filter">Box Filter</option>
+            <option value="gaussian_filter">Gaussian Filter</option>
+            <option value="median_filter">Median Filter</option>
+            <option value="bilateral_filter">Bilateral Filter</option>
+        </select>
+        <br>
+        <button type="submit">Process</button>
+        <a href="{{ url_for('download_all') }}"><button type="button">Download All</button></a>
+    </form>
+
+    <!-- Gallery of Processed Images with file paths -->
+    {% if processed_images %}
+        <div class="gallery">
+            {% for img_file in processed_images %}
+                <div class="image-card">
+                    <img src="{{ url_for('static', filename='processed/' + img_file) }}" alt="Processed Image">
+                    <p class="file-path">{{ 'static/processed/' + img_file }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
