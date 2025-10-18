@@ -8,16 +8,19 @@ import zipfile
 import time
 from pathlib import Path
 
+# ==========================
+# FLASK APP SETUP
+# ==========================
 app = Flask(__name__)
-app.secret_key = "secret_key_123"  # for flash messages
+app.secret_key = "secret_key_123"  # For flash messages
 
-# Ensure processed folder exists
+# Folder to store processed images
 UPLOAD_FOLDER = "static/processed"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ===============================
+# ==========================
 # IMAGE PROCESSING FUNCTIONS
-# ===============================
+# ==========================
 def translation(img):
     rows, cols = img.shape[:2]
     M = np.float32([[1, 0, 50], [0, 1, 50]])
@@ -92,9 +95,9 @@ def median_filter(img):
 def bilateral_filter(img):
     return cv2.bilateralFilter(img, 9, 75, 75)
 
-# ====================================
+# ==========================
 # HELPER FUNCTIONS
-# ====================================
+# ==========================
 def clear_old_images(hours=1):
     now = time.time()
     cutoff = now - hours * 3600
@@ -109,9 +112,9 @@ def reset_gallery():
         if file.is_file():
             file.unlink()
 
-# ====================================
+# ==========================
 # ROUTES
-# ====================================
+# ==========================
 @app.route('/')
 def index():
     return render_template('index.html', processed_images=None)
@@ -122,39 +125,40 @@ def process_images():
     clear_old_images(hours=1)
 
     files = request.files.getlist('images')
-    operation = request.form['operation']
+    operation = request.form.get('operation')
     processed_paths = []
 
     if not files:
         flash("No images uploaded.", "error")
         return redirect(url_for("index"))
 
+    op_dict = {
+        'translation': translation,
+        'rotation': rotation,
+        'scaling': scaling,
+        'brightness_enhance': brightness_enhance,
+        'brightness_suppress': brightness_suppress,
+        'contrast': contrast,
+        'hist_eq': hist_eq,
+        'negative': negative,
+        'gray_slice_no_bg': gray_slice_no_bg,
+        'gray_slice_bg': gray_slice_bg,
+        'log': log_transform,
+        'power': power_law,
+        'freq': frequency_response,
+        'zoom': zoom_pixel_replication,
+        'box_filter': box_filter,
+        'gaussian_filter': gaussian_filter,
+        'median_filter': median_filter,
+        'bilateral_filter': bilateral_filter
+    }
+
     for file in files:
         img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
         if img is None:
             continue
 
-        op_func = {
-            'translation': translation,
-            'rotation': rotation,
-            'scaling': scaling,
-            'brightness_enhance': brightness_enhance,
-            'brightness_suppress': brightness_suppress,
-            'contrast': contrast,
-            'hist_eq': hist_eq,
-            'negative': negative,
-            'gray_slice_no_bg': gray_slice_no_bg,
-            'gray_slice_bg': gray_slice_bg,
-            'log': log_transform,
-            'power': power_law,
-            'freq': frequency_response,
-            'zoom': zoom_pixel_replication,
-            'box_filter': box_filter,
-            'gaussian_filter': gaussian_filter,
-            'median_filter': median_filter,
-            'bilateral_filter': bilateral_filter
-        }.get(operation, None)
-
+        op_func = op_dict.get(operation)
         out = op_func(img) if op_func else img
         out = np.array(out, dtype=np.uint8)
         if len(out.shape) == 2:
@@ -179,9 +183,9 @@ def download_all():
     return send_file(zip_buffer, mimetype='application/zip',
                      as_attachment=True, download_name='processed_images.zip')
 
-# ====================================
-# RUN APP (Railway-ready)
-# ====================================
+# ==========================
+# MAIN ENTRY (LOCAL TEST)
+# ==========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # Only used for local testing
+    app.run(host="0.0.0.0", port=5000, debug=True)
