@@ -9,17 +9,16 @@ import time
 from pathlib import Path
 
 # ==========================
-# FLASK APP SETUP
+# Flask setup
 # ==========================
 app = Flask(__name__)
-app.secret_key = "secret_key_123"  # For flash messages
+app.secret_key = "secret_key_123"
 
-# Folder to store processed images
 UPLOAD_FOLDER = "static/processed"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ==========================
-# IMAGE PROCESSING FUNCTIONS
+# Image processing functions
 # ==========================
 def translation(img):
     rows, cols = img.shape[:2]
@@ -96,7 +95,7 @@ def bilateral_filter(img):
     return cv2.bilateralFilter(img, 9, 75, 75)
 
 # ==========================
-# HELPER FUNCTIONS
+# Helper functions
 # ==========================
 def clear_old_images(hours=1):
     now = time.time()
@@ -113,7 +112,7 @@ def reset_gallery():
             file.unlink()
 
 # ==========================
-# ROUTES
+# Routes
 # ==========================
 @app.route('/')
 def index():
@@ -182,10 +181,3 @@ def download_all():
     zip_buffer.seek(0)
     return send_file(zip_buffer, mimetype='application/zip',
                      as_attachment=True, download_name='processed_images.zip')
-
-# ==========================
-# MAIN ENTRY (LOCAL TEST)
-# ==========================
-if __name__ == "__main__":
-    # Only used for local testing
-    app.run(host="0.0.0.0", port=5000, debug=True)
