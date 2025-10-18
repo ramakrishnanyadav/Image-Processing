@@ -156,7 +156,6 @@ def process_images():
         }.get(operation, None)
 
         out = op_func(img) if op_func else img
-
         out = np.array(out, dtype=np.uint8)
         if len(out.shape) == 2:
             out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
@@ -184,6 +183,5 @@ def download_all():
 # RUN APP (Railway-ready)
 # ====================================
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
