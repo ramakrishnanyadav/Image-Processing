@@ -11,6 +11,7 @@ from pathlib import Path
 app = Flask(__name__)
 app.secret_key = "secret_key_123"  # for flash messages
 
+# Ensure processed folder exists
 UPLOAD_FOLDER = "static/processed"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -117,8 +118,8 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process_images():
-    reset_gallery()          # Clear old images
-    clear_old_images(hours=1) # Auto-delete old files
+    reset_gallery()
+    clear_old_images(hours=1)
 
     files = request.files.getlist('images')
     operation = request.form['operation']
@@ -133,7 +134,6 @@ def process_images():
         if img is None:
             continue
 
-        # Select operation
         op_func = {
             'translation': translation,
             'rotation': rotation,
@@ -157,17 +157,14 @@ def process_images():
 
         out = op_func(img) if op_func else img
 
-        # Ensure proper type
         out = np.array(out, dtype=np.uint8)
-
-        # Convert grayscale to BGR for saving
         if len(out.shape) == 2:
             out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
 
         filename = f"processed_{uuid.uuid4().hex}.jpg"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         cv2.imwrite(filepath, out)
-        processed_paths.append(filename)  # store only filename
+        processed_paths.append(filename)
 
     flash(f"{len(processed_paths)} images processed successfully!", "success")
     return render_template('index.html', processed_images=processed_paths)
@@ -184,7 +181,9 @@ def download_all():
                      as_attachment=True, download_name='processed_images.zip')
 
 # ====================================
-# RUN APP
+# RUN APP (Railway-ready)
 # ====================================
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
